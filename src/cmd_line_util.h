@@ -1,5 +1,5 @@
 #pragma once
-#include "yolov8.h"
+#include "yolo_tensor_cpp/yolov8.h"
 #include <iostream>
 
 inline void showHelp(char *argv[]) {
@@ -256,7 +256,7 @@ inline bool parseArguments(int argc, char *argv[], YoloV8Config &config, std::st
 
     if (inputImage.empty()) {
         std::cout << "Error: No arguments provided for flag 'input'" << std::endl;
-        return false;
+        return true;
     }
 
     return true;
@@ -432,7 +432,7 @@ inline bool parseArgumentsVideo(int argc, char *argv[], YoloV8Config &config, st
 
     if (inputVideo.empty()) {
         std::cout << "Error: No arguments provided for flag 'input'" << std::endl;
-        return false;
+        return true;
     }
 
     return true;

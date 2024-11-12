@@ -1,5 +1,5 @@
 #include "cmd_line_util.h"
-#include "yolov8.h"
+#include "yolo_tensor_cpp/yolov8.h"
 
 // Runs object detection on an input image then saves the annotated image to disk.
 int main(int argc, char *argv[]) {

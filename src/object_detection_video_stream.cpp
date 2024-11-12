@@ -1,5 +1,5 @@
 #include "cmd_line_util.h"
-#include "yolov8.h"
+#include "yolo_tensor_cpp/yolov8.h"
 #include <opencv2/cudaimgproc.hpp>
 
 // Runs object detection on video stream then displays annotated results.

@@ -1,5 +1,6 @@
 #pragma once
-#include "engine.h"
+#include "/root/rover_ws/src/monkey_rover/monkey_localization/YOLOv8-TensorRT-CPP/libs/tensorrt-cpp-api/include/tensorrt-cpp-api/engine.h"
+// #include "tensorrt-cpp-api/engine.h" cannot use dont know why
 #include <fstream>
 
 // Utility method for checking if a file exists on disk
@@ -29,7 +30,7 @@ struct YoloV8Config {
     // Calibration data directory. Must be specified when using INT8 precision.
     std::string calibrationDataDirectory;
     // Probability threshold used to filter detected objects
-    float probabilityThreshold = 0.25f;
+    float probabilityThreshold = 0.8f; //change this to filter detected objects!!!
     // Non-maximum suppression threshold
     float nmsThreshold = 0.65f;
     // Max number of detected objects to return
@@ -43,19 +44,22 @@ struct YoloV8Config {
     int numKPS = 17;
     float kpsThreshold = 0.5f;
     // Class thresholds (default are COCO classes)
-    std::vector<std::string> classNames = {
-        "person",         "bicycle",    "car",           "motorcycle",    "airplane",     "bus",           "train",
-        "truck",          "boat",       "traffic light", "fire hydrant",  "stop sign",    "parking meter", "bench",
-        "bird",           "cat",        "dog",           "horse",         "sheep",        "cow",           "elephant",
-        "bear",           "zebra",      "giraffe",       "backpack",      "umbrella",     "handbag",       "tie",
-        "suitcase",       "frisbee",    "skis",          "snowboard",     "sports ball",  "kite",          "baseball bat",
-        "baseball glove", "skateboard", "surfboard",     "tennis racket", "bottle",       "wine glass",    "cup",
-        "fork",           "knife",      "spoon",         "bowl",          "banana",       "apple",         "sandwich",
-        "orange",         "broccoli",   "carrot",        "hot dog",       "pizza",        "donut",         "cake",
-        "chair",          "couch",      "potted plant",  "bed",           "dining table", "toilet",        "tv",
-        "laptop",         "mouse",      "remote",        "keyboard",      "cell phone",   "microwave",     "oven",
-        "toaster",        "sink",       "refrigerator",  "book",          "clock",        "vase",          "scissors",
-        "teddy bear",     "hair drier", "toothbrush"};
+    std::vector<std::string> classNames = { 
+        // "trunk"
+        "all"
+        // "person",         "bicycle",    "car",           "motorcycle",    "airplane",     "bus",           "train",
+        // "truck",          "boat",       "traffic light", "fire hydrant",  "stop sign",    "parking meter", "bench",
+        // "bird",           "cat",        "dog",           "horse",         "sheep",        "cow",           "elephant",
+        // "bear",           "zebra",      "giraffe",       "backpack",      "umbrella",     "handbag",       "tie",
+        // "suitcase",       "frisbee",    "skis",          "snowboard",     "sports ball",  "kite",          "baseball bat",
+        // "baseball glove", "skateboard", "surfboard",     "tennis racket", "bottle",       "wine glass",    "cup",
+        // "fork",           "knife",      "spoon",         "bowl",          "banana",       "apple",         "sandwich",
+        // "orange",         "broccoli",   "carrot",        "hot dog",       "pizza",        "donut",         "cake",
+        // "chair",          "couch",      "potted plant",  "bed",           "dining table", "toilet",        "tv",
+        // "laptop",         "mouse",      "remote",        "keyboard",      "cell phone",   "microwave",     "oven",
+        // "toaster",        "sink",       "refrigerator",  "book",          "clock",        "vase",          "scissors",
+        // "teddy bear",     "hair drier", "toothbrush"
+        };
 };
 
 class YoloV8 {
