@@ -27,6 +27,7 @@ find_package(ament_cmake REQUIRED)
 set(TensorRT_DIR /home/cyrus/work/libs/TensorRT-10.0.0.6/)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/libs/tensorrt-cpp-api/include)
 
 # Build the TensorRT inference engine library
 # TensorRT is found and linked by the tensorrt-cpp-api

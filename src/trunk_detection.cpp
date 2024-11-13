@@ -12,14 +12,16 @@ public:
         : Node("yolo_v8_node"), yoloV8(onnxModelPath, config) {
         // Subscribe to the ZED image topic for RGB images  /zed/zed_node/left/image_rect_color
         subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-            "/camera/color/image_raw", 
+            // "/camera/color/image_raw", 
+            "/zed/zed_node/left/image_rect_color",
             10, 
             std::bind(&YoloV8Node::imageCallback, this, std::placeholders::_1)
         );
 
         // Subscribe to the ZED depth topic for depth images "/zed/zed_node/depth/depth_registered"
         depth_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-            "/camera/depth/image_raw", 
+            // "/camera/depth/image_raw", 
+            "/zed/zed_node/depth/depth_registered",
             10, 
             std::bind(&YoloV8Node::depthCallback, this, std::placeholders::_1)
         );
