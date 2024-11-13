@@ -19,7 +19,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
-find_package(hand_interfaces REQUIRED)
+# find_package(hand_interfaces REQUIRED)
 # Specify that we are using ROS 2
 find_package(ament_cmake REQUIRED)
 
@@ -46,7 +46,7 @@ target_include_directories(YoloV8_TRT PUBLIC libs/tensorrt-cpp-api/src)
 
 add_executable(trunk_detection src/trunk_detection.cpp)
 target_link_libraries(trunk_detection YoloV8_TRT)
-ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge hand_interfaces)
+ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge)
 
 
 install(TARGETS YoloV8_TRT

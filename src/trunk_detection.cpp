@@ -3,7 +3,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include "yolo_tensor_cpp/yolov8.h"
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include "hand_interfaces/srv/frond_position.hpp"  // Adjust this include according to your package structure
+// #include "hand_interfaces/srv/frond_position.hpp"  // Adjust this include according to your package structure
 #include <vector>
 
 class YoloV8Node : public rclcpp::Node {
@@ -25,10 +25,10 @@ public:
         );
 
         // Create service server
-        service_ = this->create_service<hand_interfaces::srv::FrondPosition>(
-            "/frond_pos",
-            std::bind(&YoloV8Node::handleGetFrondPosition, this, std::placeholders::_1, std::placeholders::_2)
-        );
+        // service_ = this->create_service<hand_interfaces::srv::FrondPosition>(
+        //     "/frond_pos",
+        //     std::bind(&YoloV8Node::handleGetFrondPosition, this, std::placeholders::_1, std::placeholders::_2)
+        // );
     }
 
 private:
@@ -135,19 +135,19 @@ private:
         }
     }
 
-    void handleGetFrondPosition(const std::shared_ptr<hand_interfaces::srv::FrondPosition::Request> request,
-                                 std::shared_ptr<hand_interfaces::srv::FrondPosition::Response> response) {
+    // void handleGetFrondPosition(const std::shared_ptr<hand_interfaces::srv::FrondPosition::Request> request,
+    //                              std::shared_ptr<hand_interfaces::srv::FrondPosition::Response> response) {
         
-        response->pose = nearest_object_pose_;
-        response->success= true;
-        RCLCPP_INFO(get_logger(), "Providing nearest frond position");
+    //     response->pose = nearest_object_pose_;
+    //     response->success= true;
+    //     RCLCPP_INFO(get_logger(), "Providing nearest frond position");
 
-    }
+    // }
 
     YoloV8 yoloV8; // YOLOv8 instance
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depth_subscription_;
-    rclcpp::Service<hand_interfaces::srv::FrondPosition>::SharedPtr service_;
+    // rclcpp::Service<hand_interfaces::srv::FrondPosition>::SharedPtr service_;
 
     cv::Mat img_;  // Holds the RGB image
     std::vector<int> mid_x_;  // Stores midpoints for detected objects
