@@ -41,9 +41,9 @@ install(TARGETS tensorrt_cpp_api
   RUNTIME DESTINATION bin
 )
 
-# install(DIRECTORY include/
-#   DESTINATION include/
-#   )
+install(DIRECTORY include/
+  DESTINATION include/
+  )
 
 install(TARGETS   
   tensorrt_cpp_api
