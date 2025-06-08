@@ -227,16 +227,17 @@ bool Engine<T>::buildLoadNetwork(std::string onnxModelPath, const std::array<flo
                                  bool normalize) {
     // Only regenerate the engine file if it has not already been generated for
     // the specified options, otherwise load cached version from disk
-   const auto engineName = serializeEngineOptions(m_options, onnxModelPath);
-   std::cout << "Searching for engine file with name: " << engineName << std::endl;
+    const auto engineName = serializeEngineOptions(m_options, onnxModelPath);
+    std::cout << "Searching for engine file with name: " << engineName << std::endl;
 
-   if (Util::doesFileExist(engineName)) {
-       std::cout << "Engine found, not regenerating..." << std::endl;
-   } else {
-       if (!Util::doesFileExist(onnxModelPath)) {
-           throw std::runtime_error("Could not find onnx model at path: " + onnxModelPath);
-       }
-        // Was not able to find the engine file, generate... (unedited)
+    if (Util::doesFileExist(engineName)) {
+        std::cout << "Engine found, not regenerating..." << std::endl;
+    } else {
+        if (!Util::doesFileExist(onnxModelPath)) {
+            throw std::runtime_error("Could not find onnx model at path: " + onnxModelPath);
+        }
+
+        // Was not able to find the engine file, generate...
         std::cout << "Engine not found, generating. This could take a while..." << std::endl;
 
         // Build the onnx model into a TensorRT engine
@@ -711,7 +712,6 @@ cv::cuda::GpuMat Engine<T>::blobFromGpuMats(const std::vector<cv::cuda::GpuMat> 
 
 template <typename T> std::string Engine<T>::serializeEngineOptions(const Options &options, const std::string &onnxModelPath) {
     const auto filenamePos = onnxModelPath.find_last_of('/') + 1;
-    const auto dirPath = onnxModelPath.substr(0, filenamePos); // Extract directory path
     std::string engineName = onnxModelPath.substr(filenamePos, onnxModelPath.find_last_of('.') - filenamePos) + ".engine";
 
     // Add the GPU device name to the file to ensure that the model is only used
@@ -741,9 +741,7 @@ template <typename T> std::string Engine<T>::serializeEngineOptions(const Option
     engineName += "." + std::to_string(options.maxBatchSize);
     engineName += "." + std::to_string(options.optBatchSize);
 
-    // return engineName;
-    //find engineName path same as onnx file
-    return dirPath + engineName;
+    return engineName;
 }
 
 template <typename T> void Engine<T>::getDeviceNames(std::vector<std::string> &deviceNames) {
