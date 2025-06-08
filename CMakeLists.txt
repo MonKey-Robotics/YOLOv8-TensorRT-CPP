@@ -45,6 +45,15 @@ add_library(YoloV8_TRT SHARED src/yolov8.cpp)
 target_link_libraries(YoloV8_TRT PUBLIC tensorrt_cpp_api ${OpenCV_LIBS})
 target_include_directories(YoloV8_TRT PUBLIC libs/tensorrt-cpp-api/src)
 
+# Point to the nvcudla real library file
+set(NVCUDLA_LIB /usr/lib/aarch64-linux-gnu/nvidia/libnvcudla.so)
+# Check if it exists before linking
+if(EXISTS ${NVCUDLA_LIB})
+    message(STATUS "Linking NVCUDLA: ${NVCUDLA_LIB}")
+else()
+    message(WARNING "libnvcudla.so not found at ${NVCUDLA_LIB}")
+endif()
+
 # # Build and link the executables
 # add_executable(detect_object_image src/object_detection_image.cpp)
 # target_link_libraries(detect_object_image YoloV8_TRT)
@@ -60,6 +69,7 @@ target_link_libraries(trunk_detection
   nvcudla
   cudla
   nvinfer
+  ${NVCUDLA_LIB}
 )
 ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge)
 
