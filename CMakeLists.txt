@@ -45,9 +45,9 @@ target_include_directories(YoloV8_TRT PUBLIC libs/tensorrt-cpp-api/src)
 # add_executable(detect_object_video src/object_detection_video_stream.cpp)
 # target_link_libraries(detect_object_video YoloV8_TRT)
 
-add_executable(trunk_detection src/trunk_detection.cpp)
-target_link_libraries(trunk_detection YoloV8_TRT)
-ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge)
+# add_executable(trunk_detection src/trunk_detection.cpp)
+# target_link_libraries(trunk_detection YoloV8_TRT)
+# ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge)
 
 
 install(TARGETS YoloV8_TRT
@@ -63,7 +63,7 @@ install(DIRECTORY include/
 
 install(TARGETS   
 # detect_object_image
-trunk_detection
+# trunk_detection
 # detect_object_video
   YoloV8_TRT
   DESTINATION lib/${PROJECT_NAME})
