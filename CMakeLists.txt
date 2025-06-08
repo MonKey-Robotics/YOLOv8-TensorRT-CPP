@@ -8,6 +8,8 @@ include(cmake/ccache.cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Ofast -DNDEBUG -Wno-deprecated-declarations")
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath-link,/usr/lib/aarch64-linux-gnu -Wl,-rpath-link,/usr/lib/aarch64-linux-gnu/nvidia")
+
 # CMake Options
 option(ENABLE_BENCHMARKS "Benchmark the preprocessing, inference, and post processing" OFF)
 if (ENABLE_BENCHMARKS)
@@ -29,6 +31,11 @@ set(TensorRT_DIR /home/cyrus/work/libs/TensorRT-10.0.0.6/)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/libs/tensorrt-cpp-api/include)
 
+link_directories(
+  /usr/lib/aarch64-linux-gnu
+  /usr/lib/aarch64-linux-gnu/nvidia
+)
+
 # Build the TensorRT inference engine library
 # TensorRT is found and linked by the tensorrt-cpp-api
 add_subdirectory(libs/tensorrt-cpp-api)
@@ -45,9 +52,16 @@ target_include_directories(YoloV8_TRT PUBLIC libs/tensorrt-cpp-api/src)
 # add_executable(detect_object_video src/object_detection_video_stream.cpp)
 # target_link_libraries(detect_object_video YoloV8_TRT)
 
-# add_executable(trunk_detection src/trunk_detection.cpp)
-# target_link_libraries(trunk_detection YoloV8_TRT)
-# ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge)
+# Trunk detection example
+add_executable(trunk_detection src/trunk_detection.cpp)
+target_link_libraries(trunk_detection
+  YoloV8_TRT
+  nvdla_compiler
+  nvcudla
+  cudla
+  nvinfer
+)
+ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge)
 
 
 install(TARGETS YoloV8_TRT
@@ -63,7 +77,7 @@ install(DIRECTORY include/
 
 install(TARGETS   
 # detect_object_image
-# trunk_detection
+trunk_detection
 # detect_object_video
   YoloV8_TRT
   DESTINATION lib/${PROJECT_NAME})
