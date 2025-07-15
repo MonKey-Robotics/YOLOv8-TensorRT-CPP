@@ -8,6 +8,9 @@ include(cmake/ccache.cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Ofast -DNDEBUG -Wno-deprecated-declarations")
 
+# Linker flag to ignore unresolved symbols for NVDLA
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--allow-shlib-undefined")
+
 # CMake Options
 option(ENABLE_BENCHMARKS "Benchmark the preprocessing, inference, and post processing" OFF)
 if (ENABLE_BENCHMARKS)
@@ -46,9 +49,11 @@ target_include_directories(YoloV8_TRT PUBLIC libs/tensorrt-cpp-api/src)
 # target_link_libraries(detect_object_video YoloV8_TRT)
 
 add_executable(trunk_detection src/trunk_detection.cpp)
-target_link_libraries(trunk_detection YoloV8_TRT)
+target_link_libraries(trunk_detection 
+  YoloV8_TRT
+  -Wl,--unresolved-symbols=ignore-in-shared-libs
+ )
 ament_target_dependencies(trunk_detection rclcpp rclcpp_components sensor_msgs cv_bridge)
-
 
 install(TARGETS YoloV8_TRT
   ARCHIVE DESTINATION lib
@@ -59,7 +64,6 @@ install(TARGETS YoloV8_TRT
 # Install header files to share with other packages
 install(DIRECTORY include/
         DESTINATION include/)
-
 
 install(TARGETS   
 # detect_object_image
