@@ -712,6 +712,7 @@ cv::cuda::GpuMat Engine<T>::blobFromGpuMats(const std::vector<cv::cuda::GpuMat> 
 
 template <typename T> std::string Engine<T>::serializeEngineOptions(const Options &options, const std::string &onnxModelPath) {
     const auto filenamePos = onnxModelPath.find_last_of('/') + 1;
+    const auto dirPath = onnxModelPath.substr(0, filenamePos); // Extract directory path
     std::string engineName = onnxModelPath.substr(filenamePos, onnxModelPath.find_last_of('.') - filenamePos) + ".engine";
 
     // Add the GPU device name to the file to ensure that the model is only used
@@ -741,7 +742,8 @@ template <typename T> std::string Engine<T>::serializeEngineOptions(const Option
     engineName += "." + std::to_string(options.maxBatchSize);
     engineName += "." + std::to_string(options.optBatchSize);
 
-    return engineName;
+    //find engineName path same as onnx file
+    return dirPath + engineName;
 }
 
 template <typename T> void Engine<T>::getDeviceNames(std::vector<std::string> &deviceNames) {
