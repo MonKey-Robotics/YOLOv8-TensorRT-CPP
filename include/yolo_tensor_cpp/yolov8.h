@@ -20,6 +20,10 @@ struct Object {
     cv::Mat boxMask;
     // Pose estimation key points
     std::vector<float> kps{};
+    // Oriented bounding box fields
+    float angle{};  // Rotation angle in radians
+    cv::RotatedRect rotatedRect;  // OpenCV rotated rectangle (center, size, angle in degrees)
+    std::vector<cv::Point2f> corners;  // Four corner points of the OBB
 };
 
 // Config the behavior of the YoloV8 detector.
@@ -86,6 +90,9 @@ private:
 
     // Postprocess the output for segmentation model
     std::vector<Object> postProcessSegmentation(std::vector<std::vector<float>> &featureVectors);
+
+    // Postprocess the output for OBB (Oriented Bounding Box) model
+    std::vector<Object> postprocessOBB(std::vector<float> &featureVector);
 
     std::unique_ptr<Engine<float>> m_trtEngine = nullptr;
 

@@ -94,7 +94,7 @@ std::vector<Object> YoloV8::detectObjects(const cv::cuda::GpuMat &inputImageBGR)
     std::vector<Object> ret;
     const auto &numOutputs = m_trtEngine->getOutputDims().size();
     if (numOutputs == 1) {
-        // Object detection or pose estimation
+        // Object detection or pose estimation or OBB
         // Since we have a batch size of 1 and only 1 output, we must convert the output from a 3D array to a 1D array.
         std::vector<float> featureVector;
         Engine<float>::transformOutput(featureVectors, featureVector);
@@ -107,8 +107,18 @@ std::vector<Object> YoloV8::detectObjects(const cv::cuda::GpuMat &inputImageBGR)
             // Pose estimation
             ret = postprocessPose(featureVector);
         } else {
-            // Object detection
-            ret = postprocessDetect(featureVector);
+            // Check if OBB model by checking if numChannels matches: 4 (bbox) + num_classes + 1 (angle)
+            // For single class OBB: 4 + 1 + 1 = 6
+            int numClasses = CLASS_NAMES.size();
+            int expectedOBBChannels = 4 + numClasses + 1; // bbox (4) + classes + angle (1)
+
+            if (numChannels == expectedOBBChannels) {
+                // OBB detection
+                ret = postprocessOBB(featureVector);
+            } else {
+                // Standard object detection
+                ret = postprocessDetect(featureVector);
+            }
         }
     } else {
         // Segmentation
@@ -399,6 +409,110 @@ std::vector<Object> YoloV8::postprocessDetect(std::vector<float> &featureVector)
     return objects;
 }
 
+std::vector<Object> YoloV8::postprocessOBB(std::vector<float> &featureVector) {
+    const auto &outputDims = m_trtEngine->getOutputDims();
+    auto numChannels = outputDims[0].d[1];
+    auto numAnchors = outputDims[0].d[2];
+
+    auto numClasses = CLASS_NAMES.size();
+
+    std::vector<cv::RotatedRect> rotatedBboxes;
+    std::vector<float> scores;
+    std::vector<int> labels;
+    std::vector<int> indices;
+
+    cv::Mat output = cv::Mat(numChannels, numAnchors, CV_32F, featureVector.data());
+    output = output.t();
+
+    // Get all the YOLO OBB proposals
+    for (int i = 0; i < numAnchors; i++) {
+        auto rowPtr = output.row(i).ptr<float>();
+        auto bboxesPtr = rowPtr;
+        auto scoresPtr = rowPtr + 4;
+        auto anglePtr = rowPtr + 4 + numClasses;  // Angle is after bbox and class scores
+
+        auto maxSPtr = std::max_element(scoresPtr, scoresPtr + numClasses);
+        float score = *maxSPtr;
+
+        if (score > PROBABILITY_THRESHOLD) {
+            float x = *bboxesPtr++;      // center x
+            float y = *bboxesPtr++;      // center y
+            float w = *bboxesPtr++;      // width
+            float h = *bboxesPtr;        // height
+            float angle = *anglePtr;     // rotation angle in radians
+
+            // Scale coordinates back to original image size
+            float cx = x * m_ratio;
+            float cy = y * m_ratio;
+            float width = w * m_ratio;
+            float height = h * m_ratio;
+
+            // Clamp to image bounds
+            cx = std::clamp(cx, 0.f, m_imgWidth);
+            cy = std::clamp(cy, 0.f, m_imgHeight);
+            width = std::clamp(width, 0.f, m_imgWidth);
+            height = std::clamp(height, 0.f, m_imgHeight);
+
+            int label = maxSPtr - scoresPtr;
+
+            // Create OpenCV RotatedRect (angle in degrees)
+            cv::RotatedRect rotatedRect(
+                cv::Point2f(cx, cy),
+                cv::Size2f(width, height),
+                angle * 180.0f / CV_PI  // Convert radians to degrees
+            );
+
+            rotatedBboxes.push_back(rotatedRect);
+            labels.push_back(label);
+            scores.push_back(score);
+        }
+    }
+
+    // Run NMS for rotated boxes using OpenCV's NMSBoxes
+    // Convert rotated rects to regular rects for NMS
+    std::vector<cv::Rect> bboxesForNMS;
+    for (const auto &rotatedRect : rotatedBboxes) {
+        bboxesForNMS.push_back(rotatedRect.boundingRect());
+    }
+
+    cv::dnn::NMSBoxesBatched(bboxesForNMS, scores, labels, PROBABILITY_THRESHOLD, NMS_THRESHOLD, indices);
+
+    std::vector<Object> objects;
+
+    // Choose the top k detections
+    int cnt = 0;
+    for (auto &chosenIdx : indices) {
+        if (cnt >= TOP_K) {
+            break;
+        }
+
+        Object obj{};
+        obj.probability = scores[chosenIdx];
+        obj.label = labels[chosenIdx];
+        obj.rotatedRect = rotatedBboxes[chosenIdx];
+
+        // Store the angle in radians
+        obj.angle = rotatedBboxes[chosenIdx].angle * CV_PI / 180.0f;
+
+        // Calculate the four corner points
+        cv::Point2f vertices[4];
+        rotatedBboxes[chosenIdx].points(vertices);
+        obj.corners.clear();
+        for (int i = 0; i < 4; i++) {
+            obj.corners.push_back(vertices[i]);
+        }
+
+        // Also populate the regular rect field with the bounding rect for compatibility
+        obj.rect = rotatedBboxes[chosenIdx].boundingRect();
+
+        objects.push_back(obj);
+
+        cnt += 1;
+    }
+
+    return objects;
+}
+
 void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale) {
     // If segmentation information is present, start with that
     if (!objects.empty() && !objects[0].boxMask.empty()) {
@@ -442,7 +556,27 @@ void YoloV8::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects
         int x = object.rect.x;
         int y = object.rect.y + 1;
 
-        cv::rectangle(image, rect, color * 255, scale + 1);
+        // Draw oriented bounding box if available, otherwise draw regular rectangle
+        if (!object.corners.empty() && object.corners.size() == 4) {
+            // Draw oriented bounding box
+            std::vector<cv::Point> intCorners;
+            for (const auto& corner : object.corners) {
+                intCorners.push_back(cv::Point(static_cast<int>(corner.x), static_cast<int>(corner.y)));
+            }
+
+            // Draw the four lines of the rotated rectangle
+            for (int i = 0; i < 4; i++) {
+                cv::line(image, intCorners[i], intCorners[(i + 1) % 4], color * 255, scale + 1);
+            }
+
+            // Optional: Draw a circle at the center
+            cv::Point2f center = object.rotatedRect.center;
+            cv::circle(image, cv::Point(static_cast<int>(center.x), static_cast<int>(center.y)),
+                      3 * scale, color * 255, -1);
+        } else {
+            // Draw regular rectangle for non-OBB detections
+            cv::rectangle(image, rect, color * 255, scale + 1);
+        }
 
         cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(labelSize.width, labelSize.height + baseLine)), txt_bk_color, -1);
 
